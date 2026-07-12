@@ -1,320 +1,224 @@
-# MORPH: Probabilistic Football Tactical Structure Recognition via Bayesian Graph Neural Networks
+# Evaluating Defensive Influence Using GATs — 2022 FIFA World Cup Adaptation
 
-**MORPH** (Metric of Relative Positional Heterogeneity) is a dynamic, context-aware framework for probabilistic football tactical structure identification, powered by Bayesian Graph Neural Networks (B-GNN). This is the first sub-project of the **G-TAF** (Graph Neural Network-driven Tactical Analysis Framework).
-
-[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.1+-orange.svg)](https://pytorch.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+**Paper Reproduction Project**: Adapting Gregory Everett's GAPP (Graph Attention for Pass Probabilities) model from English Premier League data to the 2022 FIFA World Cup tracking dataset.
 
 ---
 
-## 🎯 Key Features
+## 📌 Project Overview
 
-- **Bayesian Uncertainty Quantification**: MC Dropout + Dirichlet-Multinomial aggregation for epistemic/aleatoric uncertainty
-- **Context-Aware Recognition**: Two-level tactical contextualization (macro-phase + fine-intent)
-- **Graph-Based Representation**: Delaunay triangulation + shape-graph pruning for spatial structure
-- **Temporal Coherence**: 5.7× more stable than baseline (JSD = 0.106 vs 0.607)
-- **High Accuracy**: 91.0% frame-level accuracy, 87.4% macro F1 on FIFA World Cup 2022 dataset
-- **Comprehensive Evaluation**: 7-dimensional assessment framework (temporal coherence, semantic validity, predictive power, changepoint detection, novel Bayesian metrics)
+This project is based on the IEEE DSAA 2025 paper:
+> **"Evaluating Defensive Influence in Multi-Agent Systems Using Graph Attention Networks"**  
+> Gregory Everett, Ryan J. Beal, Tim Matthews, Timothy J. Norman, Sarvapali D. Ramchurn (2025)
+
+**Original Implementation**: 306 EPL matches with event and tracking data (provided by Gradient Sports)
+
+**This Project's Contributions**:
+- ✅ Full adaptation to **Gradient Sports Enhanced 2022 World Cup Dataset**
+- ✅ Resolved coordinate system, data format, and half-time separation challenges
+- ✅ Provided two versions of notebooks: Test and General
+- ✅ Validated model effectiveness on the World Cup Final (Argentina vs France)
 
 ---
 
-## 📊 Dataset
+## 🎯 Model Capabilities
 
-**Gradient Sports Enhanced 2022 World Cup Dataset**
-- 64 matches, 128 team-sides
-- Synchronized tracking data (25 FPS) + event labels
-- Test match: Final (Argentina vs France, gameID: 10517)
+### 1️⃣ Pass Reception Probability Prediction
+Uses Graph Attention Networks (GAT) to predict each attacking player's probability of receiving the ball at the next event by modeling game state as a graph structure.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/bb35bae7-c76c-467a-86f7-18816c9060cd" alt="Reception_Prediction" width="600" />
+</p>
+
+### 2️⃣ Defensive Influence Metrics
+Extracts two novel defensive metrics through the GAT attention mechanism:
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/b52efd80-d383-41fd-b6ac-a4e5664f9d99" alt="DI" width="420" />
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/cd54f579-bfe9-4677-befe-a8fbd5a5afa7" alt="DP" width="420" />
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <em>Left — Defender Influence (DI): the change in an attacker's reception probability when a specific defender's attention is masked. Positive DI indicates the defender reduces the attacker's chance to receive the ball.  
+      Right — Defender Performance (DP): the DI values aggregated and weighted by each attacker's xT (attacking threat). DP quantifies a defender's overall off‑ball positional value in reducing dangerous reception opportunities.</em>
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
+### Environment Setup
+```bash
+# Activate virtual environment
+defensiveGATenv\Scripts\activate
+
+# Verify dependencies
+pip list | findstr "torch pandas numpy matplotlib"
+```
+
+### Choose Your Version
+
+#### 📂 Test Version (`2022WC_Notebooks_Test/`)
+**Suitable for**: First-time users, learning, environment validation  
+**Features**: Fixed final match data, fast training (5 epochs), detailed Chinese annotations, 15-25 minutes total runtime
 
 ```bash
-# Clone the repository
-git clone https://github.com/YOUR_USERNAME/MORPH.git
-cd MORPH
-
-# Create virtual environment (Python 3.12 required)
-python -m venv MORPHenv
-source MORPHenv/bin/activate  # On Windows: MORPHenv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Verify installation
-python -c "import torch, pyro, kloppy; print('Installation successful!')"
+cd 2022WC_Notebooks_Test
+jupyter notebook
+# Run in order: 0 → 1 → 2 → 3 → 4
 ```
 
-### 2. Data Preparation
-
-Place the 2022 World Cup dataset in:
-```
-/path/to/Gradient Sports  Enhanced 2022 World Cup Dataset/
-```
-
-Update `config.py` with your dataset path.
-
-### 3. Run Pipeline
-
-**Test Version (Single Match - Recommended for First Run)**
+#### 📂 General Version (`2022WC_Notebooks_General/`)
+**Suitable for**: Research, multi-match analysis, high-quality results  
+**Features**: Any 2022 World Cup match, full training (10-40 epochs), production-ready code
 
 ```bash
-# Step 1: Data Preprocessing
-jupyter notebook Step1_Contextualization_Scaling/Test/1.1_test_Convert_TrackingData.ipynb
-
-# Step 2: Graph Representation
-jupyter notebook Step2_Graph_Representation/Test/2.1_test_Delaunay_Triangulation.ipynb
-
-# Step 3: B-GNN Inference
-jupyter notebook Step3_Probabilistic_Identification/3.2_BGNN/Test/3.2.4_test_b1_inference.ipynb
+cd 2022WC_Notebooks_General
+jupyter notebook
+# Run in order: 0 → 1 → 2 → 3 → 4
 ```
 
-**General Version (All 64 Matches - HPC Recommended)**
+### Notebook Workflow
 
-```bash
-# Run scripts sequentially
-python General/scripts/step3_2_4_b1_inference_2.0.py --game_id 10517
-python General/scripts/step3_3_1_temporal_coherence.py --game_id 10517
-python General/scripts/step3_3_2_tei_semantic.py --game_id 10517
+| Step | Notebook | Function | Depends On |
+|:---:|----------|----------|:----------:|
+| **0** | ConvertTracking | Convert raw tracking data to model input format | None |
+| **1** | RunGATModel | Build graph data, train GAT model | 0 |
+| **2** | Visualisation | Interactive visualization of predictions and DI/DP metrics | 0, 1 |
+| **3** | PlayerEval | Compute player-level defensive metrics | 0, 1 |
+| **4** | Experiments | Defensive performance comparison, attention mechanism validation, case studies | 0, 1, 3 |
+
+⚠️ **Must run in order** — subsequent steps depend on outputs from previous steps!
+
+---
+
+## 📊 Version Comparison
+
+| Feature | Test Version | General Version |
+|---------|:------------:|:---------------:|
+| Data Scope | Fixed (Final match) | Flexible (Any match) |
+| Training Scale | Small (5 epochs) | Full (10-40 epochs) |
+| Runtime | Short (15-25 min) | Long (30-60 min/match) |
+| Annotation Detail | Very detailed | Concise & efficient |
+| Use Case | Learning, Testing | Research, Production |
+| Result Quality | Validation-grade | Publication-grade |
+
+---
+
+## 📁 Project Structure
+
 ```
-
-For HPC cluster submission:
-```bash
-sbatch General/slurm/run_step3_3_1.slurm
+Project Root/
+├── 2022WC_Notebooks_Test/          # Test version notebooks (Final match)
+├── 2022WC_Notebooks_General/       # General version notebooks (Any match)
+├── GNNs/                           # Trained model files
+├── Data/                           # Data files (prepare yourself)
+├── results/                        # Output results (plots, metrics)
+├── convert_tracking.py             # Data conversion module (adapted for 2022WC)
+├── create_graph.py                 # Graph construction module (adapted for 2022WC)
+├── plot_functions.py               # Plotting utilities
+├── scale_graph.py                  # Graph normalization utilities
+├── visualisation.py                # Visualization module
+├── xT_grid.csv                     # Expected threat value grid
+├── ADAPTATION_GUIDE_2022_WC.md     # Complete adaptation documentation
+└── requirements.txt                # Python dependencies
 ```
 
 ---
 
-## 🏗️ Architecture
+## 🔬 Model Architecture
 
-### Four-Stage Pipeline
+<img width="12925" height="4340" alt="ModelDiagram" src="https://github.com/user-attachments/assets/aadf973e-09ea-41cd-9e22-5ca0f8a32ccf" />
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Step 1: Contextualization & Scaling                         │
-│  ├─ Macro-phase: attack / defense                           │
-│  ├─ Fine-intent: BUILD_UP / ATTACKING_PLAY / HIGH_BLOCK /   │
-│  │                MID_BLOCK / LOW_BLOCK                      │
-│  └─ Spatial normalization (0-1 scaling)                     │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 2: Graph Representation                                │
-│  ├─ Delaunay triangulation                                  │
-│  ├─ Shape-graph pruning (remove long edges)                 │
-│  └─ Geometric features: 24-dim global + edge attributes     │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 3: Bayesian GNN Inference                              │
-│  ├─ Stage1 B-GNN: GCN encoder (frozen after training)       │
-│  │   ├─ embed(): deterministic 128-dim embedding            │
-│  │   └─ embed_mc(): MC Dropout (N=50 samples)              │
-│  ├─ Prototype-based classification (45 formations)          │
-│  │   └─ Cosine similarity + temperature-scaled softmax      │
-│  ├─ Frame-level: MC Dropout → epistemic uncertainty         │
-│  └─ Window-level: Dirichlet-Multinomial → P_window ± CI     │
-└─────────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 4: Evaluation & Analysis (7 dimensions)                │
-│  ├─ 3.3.1 Temporal Coherence (JSD, switch rate, CI smooth)  │
-│  ├─ 3.3.2 Semantic Validity (TEI by context, event study)   │
-│  ├─ 3.3.3 Predictive Validity (CI→formation change, r=0.19) │
-│  ├─ 3.3.4 Novel Bayesian Metrics (Info Gain, Surprise)      │
-│  └─ 3.3.5 Changepoint Detection (PELT on JSD)               │
-└─────────────────────────────────────────────────────────────┘
-```
+### Architecture Details
+- **Graph construction**: Fully connected, directed graph with a special ball node (V = players ∪ {ball})
+- **Node features**: Position, velocity, acceleration, distances to goals, distance/angle to ball, on-attacking-team/on‑ball flags
+- **Edge features**: Relative distances, edge angle, difference in node angles to the ball, same‑team flag
+- **GAT specifics**: 2 GAT layers, 16 attention heads, skip connection + concatenation to encoders
 
-### Bayesian Framework
-
-**Method A: MC Dropout (Frame-level Epistemic Uncertainty)**
-```python
-# Inference with dropout enabled
-for n in range(N_MC):
-    z_mc = model.embed_mc(graph)  # MC Dropout active
-    p_n = softmax(cosine_sim(z_mc, prototypes) / tau)
-frame_probs = mean(p_n)
-frame_epistemic = var(p_n)
-```
-
-**Method B: Dirichlet-Multinomial (Window-level Aggregation)**
-```python
-# Sliding window (300 frames, stride 75)
-counts = stability_weighted_counts(frame_probs_window)
-alpha = 1 + counts  # Dirichlet prior update
-P_window = alpha / sum(alpha)
-P_window_CI = dirichlet_credible_interval(alpha, level=0.95)
-```
+### Training Hyperparameters
+- Batch size: 64 | Epochs: 200 (original) / 5-40 (this project)
+- Node hidden size: 32 | Edge hidden size: 16
+- Loss: Binary cross‑entropy (attacking players masked to compute loss only where relevant)
+- Optimizer: Adam, initial LR = 0.003
 
 ---
 
-## 📈 Results
+## 📚 Data Description
 
-### Cross-Game Aggregate (64 matches)
+### Original Dataset (EPL)
+English Premier League events and tracking data provided by Gradient Sports (306 matches, ~359,040 on‑ball events).
 
-| Metric | Value | p-value | Significance |
-|--------|-------|---------|--------------|
-| **Goal events → TEI** | n=388 | 3.39e-06 | ✅ Highly significant |
-| **Substitution → TEI** | n=1150 | 4.14e-06 | ✅ Highly significant |
-| **Yellow cards → TEI** | n=210 | 0.384 | ❌ Not significant |
-| **CI predictive validity** | r=0.189 | — | ✅ 57% team-sides significant |
-
-### Key Findings
-
-1. **TEI rises after goals** (3.718 → 3.721 bits): Captures tactical transition period
-2. **TEI drops after substitutions**: Tactical intervention stabilizes formation
-3. **Attack vs Defense TEI**: No significant difference (p=0.295) — Elite teams maintain high discipline in both phases
-4. **Bayesian uncertainty predicts formation changes**: CI width correlates with next-window change (Spearman r=0.189, 57% significant)
+### This Project's Data (2022 FIFA World Cup)
+**Gradient Sports Enhanced 2022 World Cup Dataset**
+- Contains complete player and ball tracking data
+- Coordinate system: Center origin (0,0), X-axis along length, Y-axis along width
+- Data files must be prepared separately (see `ADAPTATION_GUIDE_2022_WC.md`)
 
 ---
 
-## 📂 Project Structure
+## 🎓 Learning Path
 
-```
-MORPH/
-├── Step1_Contextualization_Scaling/
-│   ├── Test/                    # Single-match notebooks
-│   └── General/                 # Scripts for all 64 matches
-├── Step2_Graph_Representation/
-│   ├── Test/
-│   └── General/
-├── Step3_Probabilistic_Identification/
-│   ├── 3.1_Baseline/            # EFPI baseline
-│   ├── 3.2_BGNN/                # B-GNN implementation
-│   │   ├── Test/
-│   │   └── General/
-│   │       └── scripts/         # Evaluation scripts (3.3.1-3.3.5)
-│   └── 3.3_Evaluation/          # Analysis notebooks
-├── General/
-│   ├── config.py                # Global configuration
-│   ├── scripts/                 # Production scripts
-│   │   ├── step3_2_4_b1_inference_2.0.py
-│   │   ├── step3_3_1_temporal_coherence.py
-│   │   ├── step3_3_2_tei_semantic.py
-│   │   ├── step3_3_3_bayesian_predictive.py
-│   │   ├── step3_3_4_bayesian_novel.py
-│   │   ├── step3_3_5_changepoint.py
-│   │   └── step3_3_2_cross_game_aggregate.py
-│   └── slurm/                   # HPC job scripts
-├── MORPH_ADAPTATION_GUIDE.md    # Implementation log
-├── BAYESIAN_FEASIBILITY_ANALYSIS.md
-└── requirements.txt
-```
+1. **Getting Started**: Read `2022WC_Notebooks_Test/README.md` → Run test version notebooks
+2. **Deep Dive**: Read `ADAPTATION_GUIDE_2022_WC.md` → Understand adaptation details
+3. **Application**: Use general version to analyze matches of interest → Batch process multiple matches
 
 ---
 
-## 🔬 Evaluation Framework (7 Dimensions)
+## 💡 Potential Use Cases
 
-### 3.3.1 Temporal Coherence
-- **JSD stability**: B-GNN 0.106 vs EFPI 0.607 (5.7× better)
-- **Switch rate**: 0.67% vs 15.8%
-- **CI smoothness**: Dirichlet CI width temporal consistency
-
-### 3.3.2 Semantic Validity
-- **TEI by context**: Attack/defense, fine-intent grouping
-- **Event study**: ±60s window around goals/substitutions/cards
-- **GM-TEI**: Geometry-modulated TEI (incorporates spread/compactness)
-
-### 3.3.3 Bayesian Predictive Validity
-- **CI→formation change**: Spearman r median = 0.189
-- **Epistemic/Aleatoric quadrant**: High epistemic → reactive defense
-
-### 3.3.4 Novel Bayesian Metrics
-- **Information Gain**: KL(P_window || Uniform) — strength of data evidence
-- **Bayesian Surprise**: KL(P_t || P_{t-1}) — temporal belief shift
-
-### 3.3.5 Changepoint Detection
-- **PELT algorithm** on JSD timeseries (penalty = 5×σ²ln(n))
-- **Alignment with events**: Mean distance to nearest goal/substitution
+- **Post‑match tactical analysis**: Visualize event‑by‑event DI/DP to identify moments where defender positioning prevented high‑threat receptions
+- **Scouting & recruitment**: Rank and compare defenders by normalized season DP to identify players who consistently limit high‑xT receivers
+- **Player development & coaching**: Provide targeted feedback on off‑ball positioning (which attacker matchups a defender influences most)
+- **Match preparation / opposition scouting**: Identify attackers a defender is particularly effective (or weak) against and adapt marking strategies
+- **Research & transfer to other domains**: Framework generalizes to other multi‑agent systems (e.g., security games or other team sports) where agent influence can be framed via attention
 
 ---
 
-## 🛠️ Dependencies
+## 📖 Citation & Contact
 
-```
-torch>=2.1.0
-pyro-ppl>=1.8.6
-torch_geometric>=2.4.0
-kloppy>=3.10.0
-polars>=0.19.0
-pandas>=2.1.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-ruptures>=1.1.8
-tqdm>=4.66.0
-```
-
----
-
-## 📝 Citation
-
-If you use this code in your research, please cite:
+If you use this work, please cite the original paper:
 
 ```bibtex
-@misc{morph2026,
-  author = {Wu, Jerry},
-  title = {MORPH: Probabilistic Football Tactical Structure Recognition via Bayesian Graph Neural Networks},
-  year = {2026},
-  publisher = {GitHub},
-  url = {https://github.com/YOUR_USERNAME/MORPH}
+@inproceedings{everett2025evaluating,
+  title     = {Evaluating Defensive Influence in Multi-Agent Systems Using Graph Attention Networks},
+  author    = {Everett, Gregory and Beal, Ryan J. and Matthews, Tim and Norman, Timothy J. and Ramchurn, Sarvapali D.},
+  booktitle = {2025 IEEE 12th International Conference on Data Science and Advanced Analytics},
+  year      = {2025}
 }
 ```
 
----
-
-## 📧 Contact
-
-- **Author**: JerryWu
-- **Project**: G-TAF (Graph Neural Network-driven Tactical Analysis Framework)
-- **Institution**: [Your Institution]
+**Original Author Contact**: gae1g17@soton.ac.uk  
+**Dataset Inquiries**: https://www.gradientsports.com/
 
 ---
 
-## 📄 License
+## 🆘 FAQ
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Q: Which version should I use?
+A: First-time use or learning → **Test Version** | Actual research or analysis → **General Version**
 
----
+### Q: Can I skip some steps?
+A: **No**. Each step depends on outputs from previous steps and must be run in order.
 
-## 🙏 Acknowledgments
+### Q: What are the main differences from the original code?
+A: See `ADAPTATION_GUIDE_2022_WC.md`, including:
+- Coordinate system transformation (center origin → bottom-left origin)
+- Half-time separation logic (based on game time instead of team ID)
+- Data loading format (Parquet → CSV + timestamp alignment)
+- xT grid interpolation (bilinear interpolation matching new coordinate system)
 
-- **Dataset**: Gradient Sports Enhanced 2022 World Cup Dataset
-- **Baseline Method**: EFPI (Evolutionary Formation Pattern Identification)
-- **Key References**:
-  - Gal & Ghahramani (2016): Dropout as a Bayesian Approximation
-  - Minka (2000): Estimating a Dirichlet distribution
-  - Killick et al. (2012): PELT algorithm for changepoint detection
-
----
-
-## 🔄 Development Status
-
-**Current Version**: v7.0 (Bayesian Integration Complete)
-
-- ✅ Step 1-2: Data preprocessing & graph representation
-- ✅ Step 3.1: Baseline methods (EFPI)
-- ✅ Step 3.2: B-GNN training & inference (single match + all 64 matches)
-- ✅ Step 3.3: Evaluation framework (7 dimensions)
-- 🚧 Step 4: Tactical benefit assessment (planned)
-
-**Recent Updates**:
-- [2026-07] Event annotations (goals, subs, cards, setpieces) added to all visualizations
-- [2026-07] Tactical phase color blocks integrated across evaluation plots
-- [2026-07] Cross-game aggregate analysis (64 matches) completed
-- [2026-06] GM-TEI (Geometry-Modulated TEI) implemented with 24-dim global features
-- [2026-03] Bayesian framework (MC Dropout + Dirichlet) integrated
+### Q: Chinese characters display as boxes?
+A: Notebooks are configured with Chinese font support (SimHei/Microsoft YaHei). If issues persist, check system fonts.
 
 ---
 
-## 🚀 Future Work
-
-- [ ] Extend to other datasets (tracking data from other leagues)
-- [ ] Real-time inference optimization
-- [ ] Interactive visualization dashboard
-- [ ] Tactical benefit assessment framework (Sub-project 2)
+**Project Version**: v1.0  
+**Last Updated**: November 2025  
+**Adapted by**: Jerry Wu
